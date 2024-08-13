@@ -4,8 +4,8 @@
 #include <fstream>
 #include <SDL2/SDL.h>
 Chip::Chip(){
-    //pixels[0]=1;
-    //pixels[3]=1;
+    pixels[0]=1;
+    pixels[3]=1;
     //pixels[64]=1;
    display.open();
 }
@@ -28,8 +28,12 @@ void Chip::interpret_program(){
         //decode(instruction);
         //decode();
         //execute();
-
+        unsigned short instruction = fetch();
+        //decode(instruction);
+        //decode(0x0000);
         display.updateRender(pixels);
+
+
     }
 }
 
@@ -65,6 +69,9 @@ int Chip::decode(unsigned short instruction){
                 case 0: //00E0 
                     //update window?
                     std::cout << "clear screen" << std::endl;
+                    std::fill(std::begin(pixels), std::end(pixels), 0);
+                    
+
                     break;
             }
 
@@ -73,7 +80,9 @@ int Chip::decode(unsigned short instruction){
         case 1:
             std::cout << "jump" << std::endl;
             //return 
+            
             PC = ((second << 4) | (third <<4) | lsb);
+            std::cout << std::hex << PC << std::endl;
             break;
 
         case 2:
