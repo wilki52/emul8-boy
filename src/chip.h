@@ -2,9 +2,12 @@
 #define CHIP_H
 
 #include <vector>
+#include "window.h"
 
 class Chip {
     private:
+        Window display;
+        unsigned char pixels[63*32] = {0};
         unsigned short opcode;
         unsigned char memory[4096];
 

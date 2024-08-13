@@ -1,17 +1,36 @@
 #include "chip.h"
+#include "window.h"
 #include <iostream>
 #include <fstream>
+#include <SDL2/SDL.h>
 Chip::Chip(){
-    opcode = 1;
+    //pixels[0]=1;
+    //pixels[3]=1;
+    //pixels[64]=1;
+   display.open();
 }
 
 void Chip::interpret_program(){
-    //for (;;){
-        unsigned short instruction = fetch();
-        decode(instruction);
+    SDL_Event e;
+
+    bool running = true;
+    while (running){
+
+        while (SDL_PollEvent(&e)!=0){
+
+            if (e.type==SDL_QUIT){
+                running = false;
+            }
+        }
+        
+        //display.();
+        //unsigned short instruction = fetch();
+        //decode(instruction);
         //decode();
         //execute();
-    //}
+
+        display.updateRender(pixels);
+    }
 }
 
 unsigned short Chip::fetch(){
@@ -43,7 +62,8 @@ int Chip::decode(unsigned short instruction){
     switch (msb){
         case 0:
             switch (second){
-                case 0: //00E0
+                case 0: //00E0 
+                    //update window?
                     std::cout << "clear screen" << std::endl;
                     break;
             }
@@ -52,6 +72,8 @@ int Chip::decode(unsigned short instruction){
 
         case 1:
             std::cout << "jump" << std::endl;
+            //return 
+            PC = ((second << 4) | (third <<4) | lsb);
             break;
 
         case 2:
@@ -114,6 +136,7 @@ bool Chip::load_rom(const char path[]){
     std::cout << "working.." << std::endl;
     unsigned char instruction;
     I=0x200;
+    PC =0x200;
     while (reader >> instruction){
         memory[I] = instruction;
         std::cout << instruction << std::endl;
