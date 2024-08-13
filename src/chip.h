@@ -43,11 +43,12 @@ class Chip {
         
         
         int execute();
+
     public:
         int decode(unsigned short instruction);
         unsigned short fetch();
         void interpret_program(); //emulate a cycle 
         Chip();
-        void loadRom();
+        bool load_rom(const char path[]);
 };
 #endif

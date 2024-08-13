@@ -4,6 +4,6 @@ SRC = main.cpp chip.cpp
 all: game
 
 game: src/main.cpp
-	g++ -o emul8 src/main.cpp src/chip.cpp $(SDLFLAGS)
+	g++ -o emul8 src/main.cpp src/chip.cpp src/window.cpp $(SDLFLAGS)
 
 clean:

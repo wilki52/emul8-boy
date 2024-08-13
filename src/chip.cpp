@@ -1,6 +1,6 @@
 #include "chip.h"
 #include <iostream>
-
+#include <fstream>
 Chip::Chip(){
     opcode = 1;
 }
@@ -100,4 +100,24 @@ int Chip::decode(unsigned short instruction){
 }
 int Chip::execute(){
 
+}
+
+//how tf do i do this
+bool Chip::load_rom(const char path[]){
+    //iterate through the ch8 file, starting from memory[I], I=0x200
+    std::ifstream reader(path);
+
+    if (!reader){
+        std::cout << "mmm wrong song" << std::endl;
+        return false;
+    }
+    std::cout << "working.." << std::endl;
+    unsigned char instruction;
+    I=0x200;
+    while (reader >> instruction){
+        memory[I] = instruction;
+        std::cout << instruction << std::endl;
+        I=I+1;
+    }
+    return true;
 }
