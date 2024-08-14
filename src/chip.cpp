@@ -92,7 +92,7 @@ int Chip::decode(unsigned short instruction){
             break;
 
         case 1:
-            break;
+       
             std::cout << "jump" << std::endl;
             //return 
             PC = ((second << 8) | (third <<4) | lsb);
@@ -126,7 +126,7 @@ int Chip::decode(unsigned short instruction){
         case 7:
             std::cout << "add NN to register VX" << std::endl;
             //unsigned char val = ((third <<4)|lsb);
-            V[second] += value;
+            V[second] = V[second] + value;
             break;
 
         case 8:
@@ -181,8 +181,8 @@ int Chip::decode(unsigned short instruction){
         case 13: //D
             std::cout << "display/draw" << std::endl;
             //std::cout << V[second] << " " << V[third] << std::endl;
-            for (int i = V[second]; i<(V[second]+8); i++){
-                for (int j = V[third]; j< V[third]+lsb;j++){
+            for (int j = V[third]; j< V[third]+lsb;j++){
+                for (int i = V[second]; i<(V[second]+8); i++){
                     //std::cout << 'wooo' << std::endl;
 
                     //std::cout << (i+j*64) << std::endl;

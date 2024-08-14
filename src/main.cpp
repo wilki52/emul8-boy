@@ -9,6 +9,7 @@ int main(){
     //std::cout << "blue";
 
     eight.load_rom("roms/IBM Logo.ch8");
+    //eight.load_rom("roms/test_opcode.ch8");
     
     eight.interpret_program();
     //std::cout << 0xDABC << std::endl;
