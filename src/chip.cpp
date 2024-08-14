@@ -41,6 +41,7 @@ unsigned short Chip::fetch(){
     unsigned char instruction_a = memory[PC];
     unsigned char instruction_b = memory[PC+1];
     
+    
     //instruction_a = 0xA2;
     //instruction_b = 0xF0;
     
@@ -70,11 +71,22 @@ int Chip::decode(unsigned short instruction){
             switch (second){
                 case 0: //00E0 
                     //update window?
-                    std::cout << "clear screen" << std::endl;
-                    std::fill(std::begin(pixels), std::end(pixels), 0);
+                    
+                    switch (lsb){
+
+                        case 0:
+                            std::cout << "clear screen" << std::endl;
+                            std::fill(std::begin(pixels), std::end(pixels), 0);
+                            break;
+                        default:
+                            std::cout << "return from subroutine" << std::endl;
+                        
+                    }
+
+                    
                     
 
-                    break;
+                break;
             }
 
             break;
@@ -89,58 +101,85 @@ int Chip::decode(unsigned short instruction){
             break;
 
         case 2:
+            std::cout << "call subroutine at NNN" << std::endl;
             break;
 
         case 3:
+            std::cout << "skip next instruction if VX==NN" << std::endl;
             break;
 
         case 4:
+            std::cout << "skips next instruction if VX != NN" << std::endl;
             break;
 
         case 5:
+            std::cout << "skips next instruction if VX = VY" << std::endl;
+
             break;
 
         case 6:
-            //std::cout << "set register VX" << std::endl;
-            //7XNN
-
-            //unsigned char val = ((third << 4) | lsb);
-            //vx = NN
+            std::cout << "set register VX to NN" << std::endl;
             V[second] = value;
-            
             break;
 
         case 7:
-            std::cout << "add val to register VX" << std::endl;
+            std::cout << "add NN to register VX" << std::endl;
             //unsigned char val = ((third <<4)|lsb);
-            
-            
             V[second] += value;
             break;
 
         case 8:
+            switch (lsb){
+                case 0:
+                    std::cout << "VX = VY" << std::endl;
+                    break;
+                case 1:
+                    std::cout << "VX |= VY bitwise OR" << std::endl;
+                    break;
+                case 2:
+                    std::cout << "VX &= VY bitwise AND" << std::endl;
+                    break;
+                case 3:
+                    std::cout << "VX ^= VY bitwise xor" << std::endl;
+                    break;
+                case 4:
+                    std::cout << "VX += VY (set ZF to 1 if overflow, 0 if not)" << std::endl;
+                    break;
+                case 5:
+                    std::cout << "VX -= VY (set ZF to 0 if underflow, 1 if not)" << std::endl;
+                    break;
+                case 6:
+                    std::cout << "VX>>1 shift right by 1, store lsb to VF" << std::endl;
+                    break;
+                case 7:
+                    std::cout << "VX = VY-VX if underflow, vf =0. 1 if not." << std::endl;
+                    break;
+                case 14:
+                    std::cout << "VX<<=1 SET VF TO ONE IF SOMETHING" << std::endl;
+                    break;
+                
+            }
             break;
 
         case 9:
+            std::cout << "skip next instruction if vx!=vy" << std::endl;
             break;
         case 10: //A
             std::cout << "set index register I" << std::endl;
             I  = (second << 8) | (third <<4) | lsb;
-            std::cout << I << "set" << std::endl;
+            //std::cout << I << "set" << std::endl;
     
             break;
         case 11: //B
+            std::cout << "jump to address NNN plus V0" << std::endl;
             break;
         case 12: //C
+            std::cout << "VX = rand() & NN" << std::endl;
             break;
         
         case 13: //D
             std::cout << "display/draw" << std::endl;
-            std::cout << "display/draww" << std::endl;
-
-
-            std::cout << V[second] << " " << V[third] << std::endl;
-            std::cout <<"guh" << std::endl;
+            //std::cout << V[second] << " " << V[third] << std::endl;
             for (int i = V[second]; i<(V[second]+8); i++){
                 for (int j = V[third]; j< V[third]+lsb;j++){
                     //std::cout << 'wooo' << std::endl;
@@ -163,8 +202,12 @@ int Chip::decode(unsigned short instruction){
 
             break;
         case 14: //E
+            std::cout << "e stuff" << std::endl;
+
             break;
         case 15: //F
+            std::cout << "f" << std::endl;
+
             break;
         
         
@@ -191,26 +234,27 @@ bool Chip::load_rom(const char path[]){
     int length = reader.tellg();
     reader.seekg(0, reader.beg);
 
-    std::cout << "working.." << std::endl;
+    std::cout << "working.." << length << std::endl;
     unsigned char instruction;
     I=0x200;
     PC =0x200;
+    unsigned char* pointer = memory;
     while (!reader.eof()){
        // memory
 
-        //instruction = reader.read()
-        reader >> instruction;
-        if (reader.fail()){
-            I=0x200;
-            reader.close();
-            break;
-        }
-        memory[I] = instruction;
-        std::cout <<I << std::endl;
-        std::cout <<std::hex << instruction << std::endl;
-        I=I+1;
-    }
+        while (reader.read((char*)(&instruction), sizeof(instruction))){
+            
+            std::cout << std::hex << (int)(instruction) << " ";
+            memory[I] = (int)instruction;
+            I=I+1;
 
+        }
+        
+        
+    }
+    std::cout <<"done reading " << std::endl;
+    //std::cout << "I: " << I << std::endl;
+    //std::cout << "i 2: " << memory[I-1] << std::endl;
     reader.close();
     I=0x200;
 
