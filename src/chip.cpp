@@ -122,6 +122,7 @@ int Chip::decode(unsigned short instruction){
             V[second] = value;
             break;
 
+
         case 7:
             std::cout << "add NN to register VX" << std::endl;
             //unsigned char val = ((third <<4)|lsb);
