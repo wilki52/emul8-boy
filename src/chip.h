@@ -2,13 +2,14 @@
 #define CHIP_H
 
 #include <vector>
+#include <map>
 #include "window.h"
 
 class Chip {
     private:
         Window display;
         unsigned char pixels[63*32] = {0};
-        unsigned short opcode;
+        //unsigned short opcode;
         unsigned char memory[4096];
 
         unsigned short PC; //2 bytes = 16 bits, but we only use 12.
@@ -19,7 +20,7 @@ class Chip {
         unsigned char sound_timer; //one byte sound timer //gives out beep when not 0.
 
         unsigned char V0, V1, V2, V3, V4, V5, V6, V7, V8, V9, VA, VB, VC, VD, VE, VF; //REGISTERS
-
+        std::map<char, short> V;
         //fontset
         unsigned char chip8_fontset[80] = 
         {

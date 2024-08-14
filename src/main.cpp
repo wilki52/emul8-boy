@@ -11,6 +11,8 @@ int main(){
     eight.load_rom("roms/IBM Logo.ch8");
     
     eight.interpret_program();
+    //std::cout << 0xDABC << std::endl;
+    //eight.decode(0xDABC);
     //std::cout << "yellow";
     //eight.decode(0x00E0);
 
