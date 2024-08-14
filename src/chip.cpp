@@ -30,7 +30,8 @@ void Chip::interpret_program(){
         //execute();
         unsigned short instruction = fetch();
         //decode(instruction);
-        //decode(0x0000);
+        //decode(0x1ABC);
+        break;
         display.updateRender(pixels);
 
 
@@ -81,7 +82,7 @@ int Chip::decode(unsigned short instruction){
             std::cout << "jump" << std::endl;
             //return 
             
-            PC = ((second << 4) | (third <<4) | lsb);
+            PC = ((second << 8) | (third <<4) | lsb);
             std::cout << std::hex << PC << std::endl;
             break;
 
