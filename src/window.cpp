@@ -124,7 +124,7 @@ bool Window::updateRender(unsigned char pixels[]){
     }
     
     SDL_RenderPresent(global_renderer);
-    SDL_Delay(200);
+    //SDL_Delay(50);
     
     //SDL_FillRect(global_s_surface, NULL, SDL_MapRGB( global_s_surface->format, 0xFF, 0xFF, 0xFF ) );
     //SDL_UpdateWindowSurface( global_window );

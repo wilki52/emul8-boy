@@ -4,6 +4,7 @@
 #include <fstream>
 #include <SDL2/SDL.h>
 #include <ios>
+#include <random>
 Chip::Chip(){
     //pixels[0]=1;
     //pixels[3]=1;
@@ -74,12 +75,14 @@ int Chip::decode(unsigned short instruction){
                     
                     switch (lsb){
 
-                        case 0:
+                        case 0: //00E0
                             std::cout << "clear screen" << std::endl;
                             std::fill(std::begin(pixels), std::end(pixels), 0);
                             break;
-                        default:
+                        default: //00EE
                             std::cout << "return from subroutine" << std::endl;
+                            PC = stack.back();
+                            stack.pop_back();
                         
                     }
 
@@ -102,61 +105,109 @@ int Chip::decode(unsigned short instruction){
 
         case 2:
             std::cout << "call subroutine at NNN" << std::endl;
+            stack.push_back(PC);
+            PC = ((second << 8) | (third <<4) | lsb);
             break;
 
-        case 3:
+        case 3: //3XNN
             std::cout << "skip next instruction if VX==NN" << std::endl;
+            if (V[second] == value){
+                PC= PC+2;
+            }
             break;
 
-        case 4:
+        case 4: //4XNN
             std::cout << "skips next instruction if VX != NN" << std::endl;
+            if (V[second] != value){
+                PC= PC+2;
+            }
             break;
 
         case 5:
             std::cout << "skips next instruction if VX = VY" << std::endl;
-
+            if (V[second] == V[third]){
+                PC= PC+2;
+            }
             break;
 
-        case 6:
+        case 6: //6XNN
             std::cout << "set register VX to NN" << std::endl;
             V[second] = value;
             break;
 
 
-        case 7:
+        case 7: //7XNN
             std::cout << "add NN to register VX" << std::endl;
             //unsigned char val = ((third <<4)|lsb);
             V[second] = V[second] + value;
             break;
 
-        case 8:
+        case 8: //8
             switch (lsb){
-                case 0:
+                case 0: //8XY0
                     std::cout << "VX = VY" << std::endl;
+                    V[second] = V[third];
                     break;
-                case 1:
+                case 1://8XY1
                     std::cout << "VX |= VY bitwise OR" << std::endl;
+                    V[second] = (V[second]|V[third]);
                     break;
                 case 2:
                     std::cout << "VX &= VY bitwise AND" << std::endl;
+                    V[second] = (V[second] & V[third]);
+
                     break;
                 case 3:
                     std::cout << "VX ^= VY bitwise xor" << std::endl;
+                    V[second] = (V[second] ^ V[third]);
+
                     break;
                 case 4:
                     std::cout << "VX += VY (set ZF to 1 if overflow, 0 if not)" << std::endl;
+                    V[second] = V[second] + V[third]; //would need to do 
+                    if (V[second] >255 ){ //overflow, check for uint8_t
+                        V[0xF] = 1;
+                    }
+                    else{
+                        V[0xf]=0;
+                    }
                     break;
                 case 5:
                     std::cout << "VX -= VY (set ZF to 0 if underflow, 1 if not)" << std::endl;
+                    V[second] = V[second] - V[third];
+                    if (V[second] >=0){
+                        V[0xF] = 1;
+                    }
+                    else{
+                        V[0xF] = 0;
+                    }
+
                     break;
                 case 6:
                     std::cout << "VX>>1 shift right by 1, store lsb to VF" << std::endl;
+                    V[0xF] = (V[second] & 0x1);
+                    V[second] = V[second] >>1;
                     break;
                 case 7:
                     std::cout << "VX = VY-VX if underflow, vf =0. 1 if not." << std::endl;
+                    V[second] = V[third] - V[second];
+                    if (V[second] >=0){
+                        V[0xF] = 1;
+                    }
+                    else{
+                        V[0xF] = 0;
+                    }
                     break;
                 case 14:
                     std::cout << "VX<<=1 SET VF TO ONE IF SOMETHING" << std::endl;
+                    unsigned char v_msb = (V[second] >> 7 & 0x1);
+                    V[second] = V[second] <<1;
+                    if (v_msb == 0x1){
+                        V[0xF] = 1;
+                    }
+                    else{
+                        V[0xF] = 0;
+                    }
                     break;
                 
             }
@@ -164,6 +215,10 @@ int Chip::decode(unsigned short instruction){
 
         case 9:
             std::cout << "skip next instruction if vx!=vy" << std::endl;
+            if (V[second] != V[third]){
+                PC = PC +2;
+            }
+            
             break;
         case 10: //A
             std::cout << "set index register I" << std::endl;
@@ -173,9 +228,16 @@ int Chip::decode(unsigned short instruction){
             break;
         case 11: //B
             std::cout << "jump to address NNN plus V0" << std::endl;
+            PC= V[0x0]+((second << 8) | (third <<4) | lsb); //v0 + NNN
             break;
         case 12: //C
             std::cout << "VX = rand() & NN" << std::endl;
+            std::random_device dev;
+            std::mt19937 rng(dev());
+            std::uniform_int_distribution<std::mt19937::result_type> dist6(0,255); // distribution in range [1, 6]
+
+            std::cout << "rand: " << dist6(rng) << std::endl;
+            V[second] = dist6(rng) & value;
             break;
         
         case 13: //D
@@ -216,18 +278,55 @@ int Chip::decode(unsigned short instruction){
                         }
                         //std::cout << 'helo' << std::endl;
                     }
-    
                 }
             }
-
             break;
         case 14: //E
             std::cout << "e stuff" << std::endl;
-
+            switch (lsb){
+                case 1: //EXA1
+                    std::cout << "skip if VX is not prressed" << std::endl;
+                    
+                    break;
+                case 14: //EX9E
+                    std::cout << "skip next i if key stored in vx is pressed" << std::endl;
+                    break;
+            }
             break;
         case 15: //F
             std::cout << "f" << std::endl;
-
+            switch ((third<<4)| lsb){
+                case (0x07): //FX07
+                    std::cout << "set delay timer to VX" << std::endl;
+                    break;
+                case (0x0A): //FX0A
+                    std::cout << "A key press is awaited, and then stored in VX (blocking operation, all instruction halted until next key event," << std::endl;
+                    break;
+                case (0x15): //FX07
+                    std::cout << "Sets the delay timer to VX." << std::endl;
+                    break;
+                case (0x18): //FX07
+                    std::cout << "Sets the sound timer to VX." << std::endl;
+                    break;
+                case (0x1E): //FX07
+                    std::cout << "Adds VX to I. VF is not affected" << std::endl;
+                    break;
+                case (0x29): //FX07
+                    std::cout << "Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font" << std::endl;
+                    break;
+                case (0x33): //FX07
+                    std::cout << "Stores the binary-coded decimal representation of VX, with the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2." << std::endl;
+                    break;
+                case (0x55): //FX07
+                    std::cout << "Stores from V0 to VX (including VX) in memory, starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified." << std::endl;
+                    break;
+                case (0x65): //FX07
+                    std::cout << "Fills from V0 to VX (including VX) with values from memory, starting at address I. The offset from I is increased by 1 for each value read, but I itself is left unmodified." << std::endl;
+                    break;
+                
+                
+                
+            }
             break;
         
         
