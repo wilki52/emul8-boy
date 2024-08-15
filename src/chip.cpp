@@ -180,26 +180,45 @@ int Chip::decode(unsigned short instruction){
         
         case 13: //D
             std::cout << "display/draw" << std::endl;
+
+
+            V[0xF] = 0;
             //std::cout << V[second] << " " << V[third] << std::endl;
-            for (int j = V[third]; j< V[third]+lsb;j++){
-                for (int i = V[second]; i<(V[second]+8); i++){
+            for (int j = 0; j<lsb ; j++){
+        
+                unsigned short sprite = memory[I+j];
+                std::cout << I << " + " << j << ": "<<  sprite << std::endl;
+
+                
+                if ((sprite)>0){
+                    std::cout << "sprite is 1" << std::endl;
+                }
+                else{
+                    std::cout << "sprite is 0" << std::endl;
+                }
+                for (int i = 0; i<=(7); i++){
                     //std::cout << 'wooo' << std::endl;
 
                     //std::cout << (i+j*64) << std::endl;
-                    if (pixels[i+ j*64]==0){
-                        pixels[i+j*64]=1;
+                    int bit = ((sprite >> 7-i)& 0x01);
+    
+                    if ((bit)>0){
+                        
+                        if (pixels[(V[second]+i)+ (V[third]+j)*64]==1){
+                            pixels[(V[second]+i)+(V[third]+j)*64]=0;
+                            V[0xF]=1;
+                        }
+                        else{
+                            pixels[(V[second]+i)+ (V[third]+j)*64]=1;
+                        }
+                        if (((V[second]+i)!=0) && (V[second]+i) %63==0){
+                            break;
+                        }
                         //std::cout << 'helo' << std::endl;
                     }
-                    else{
-                        pixels[i+j*64]=0;
-                        V[0xF]=1;
-                    }
+    
                 }
             }
-                //for j in y:
-                    //if pixel[i+ j*64]==0: pixel[i+j*64]=1;
-                   
-            //
 
             break;
         case 14: //E
@@ -245,7 +264,7 @@ bool Chip::load_rom(const char path[]){
 
         while (reader.read((char*)(&instruction), sizeof(instruction))){
             
-            std::cout << std::hex << (int)(instruction) << " ";
+            std::cout << "I: " << I << " hex: "<< std::hex << (int)(instruction) << " ";
             memory[I] = (int)instruction;
             I=I+1;
 
