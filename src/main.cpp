@@ -8,7 +8,10 @@ int main(){
     Chip eight;
     //std::cout << "blue";
 
-    eight.load_rom("roms/Brick.ch8");
+    //eight.load_rom("roms/Brick.ch8");
+    //eight.load_rom("roms/SpaceInvaders.ch8");
+    //eight.load_rom("roms/bc_test.ch8");
+    eight.load_rom("roms/4-flags.ch8");
     //eight.load_rom("roms/octojam1title.ch8");
     //eight.load_rom("roms/test_opcode.ch8");
     //eight.load_rom("roms/Brick.ch8");
