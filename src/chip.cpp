@@ -11,7 +11,16 @@ Chip::Chip(){
     //pixels[64]=1;
     V[0x0], V[0x1],V[0x2],V[0x3],V[0x4],V[0x5],V[0x6],V[0x7],V[0x8],V[0x9],V[0xA],V[0xB],V[0xC],V[0xD],V[0xE],V[0xF] = 0;
 
-   display.open();
+    int counter = 0;
+    //put font into memory. 
+    for (int i = 0x050; i< 0x09F; i++){
+        memory[i] = chip8_fontset[counter];
+        counter++;
+    }
+
+    //create font map
+
+    display.open();
 }
 
 void Chip::interpret_program(){
@@ -164,8 +173,12 @@ int Chip::decode(unsigned short instruction){
                     break;
                 case 4:
                     std::cout << "VX += VY (set ZF to 1 if overflow, 0 if not)" << std::endl;
+                    //
+                    
                     V[second] = V[second] + V[third]; //would need to do 
+
                     if (V[second] >255 ){ //overflow, check for uint8_t
+                        
                         V[0xF] = 1;
                     }
                     else{
@@ -174,13 +187,15 @@ int Chip::decode(unsigned short instruction){
                     break;
                 case 5:
                     std::cout << "VX -= VY (set ZF to 0 if underflow, 1 if not)" << std::endl;
-                    V[second] = V[second] - V[third];
-                    if (V[second] >=0){
+                    if (V[second] > V[third]){
                         V[0xF] = 1;
                     }
                     else{
                         V[0xF] = 0;
                     }
+
+                    V[second] = V[second] - V[third];
+                    
 
                     break;
                 case 6:
@@ -232,12 +247,12 @@ int Chip::decode(unsigned short instruction){
             break;
         case 12: //C
             std::cout << "VX = rand() & NN" << std::endl;
-            std::random_device dev;
-            std::mt19937 rng(dev());
-            std::uniform_int_distribution<std::mt19937::result_type> dist6(0,255); // distribution in range [1, 6]
+            //std::random_device dev;
+            //std::mt19937 rng(dev());
+            //std::uniform_int_distribution<std::mt19937::result_type> dist6(0,255); // distribution in range [1, 6]
 
-            std::cout << "rand: " << dist6(rng) << std::endl;
-            V[second] = dist6(rng) & value;
+            //std::cout << "rand: " << dist6(rng) << std::endl;
+            //V[second] = dist6(rng) & value;
             break;
         
         case 13: //D
@@ -286,11 +301,26 @@ int Chip::decode(unsigned short instruction){
             switch (lsb){
                 case 1: //EXA1
                     std::cout << "skip if VX is not prressed" << std::endl;
-                    
+                    SDL_Event event;
+                    if (SDL_PollEvent(&event)!=0){
+                        if (event.key.keysym.scancode != V[second]){
+                            PC= PC+2;
+                        }
+                    }
+                    else{
+                        PC=PC+2;
+                    }
                     break;
                 case 14: //EX9E
                     std::cout << "skip next i if key stored in vx is pressed" << std::endl;
+                    SDL_Event eve;
+                    if (SDL_PollEvent(&eve)!=0){
+                        if (eve.key.keysym.scancode == V[second]){
+                            PC=PC+2;
+                        }
+                    }
                     break;
+                    
             }
             break;
         case 15: //F
@@ -298,30 +328,59 @@ int Chip::decode(unsigned short instruction){
             switch ((third<<4)| lsb){
                 case (0x07): //FX07
                     std::cout << "set delay timer to VX" << std::endl;
+                    V[second] = delay_timer;
                     break;
                 case (0x0A): //FX0A
                     std::cout << "A key press is awaited, and then stored in VX (blocking operation, all instruction halted until next key event," << std::endl;
+
+                    SDL_Event ev;
+                    //while input:
+                    if (SDL_PollEvent(&ev)!=0){
+                        V[second] = ev.key.keysym.scancode;
+            
+                    }
+                    else{
+                        PC= PC-2;
+                    } 
+                    //else: return 0, aka PC=PC-2;
                     break;
                 case (0x15): //FX07
                     std::cout << "Sets the delay timer to VX." << std::endl;
+                    delay_timer = V[second];
                     break;
                 case (0x18): //FX07
                     std::cout << "Sets the sound timer to VX." << std::endl;
+                    sound_timer = V[second];
                     break;
-                case (0x1E): //FX07
+                case (0x1E): //FX1E
                     std::cout << "Adds VX to I. VF is not affected" << std::endl;
+                    I = I+ V[second];
                     break;
                 case (0x29): //FX07
                     std::cout << "Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font" << std::endl;
+                    //TODO: put font in memory
+
                     break;
                 case (0x33): //FX07
                     std::cout << "Stores the binary-coded decimal representation of VX, with the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2." << std::endl;
+                    memory[I+2] = V[second]%10;
+                    memory[I+1] = V[second]/10%10;
+                    memory[I] = V[second]/100%10;
                     break;
                 case (0x55): //FX07
                     std::cout << "Stores from V0 to VX (including VX) in memory, starting at address I. The offset from I is increased by 1 for each value written, but I itself is left unmodified." << std::endl;
+                    //stores from v0 to vx
+                    //for 0 to 0xX, store at I
+                    for (int i= 0; i<= second; i++){
+                        memory[I+i] = V[i];
+                    }
                     break;
                 case (0x65): //FX07
                     std::cout << "Fills from V0 to VX (including VX) with values from memory, starting at address I. The offset from I is increased by 1 for each value read, but I itself is left unmodified." << std::endl;
+                    for (int i= 0x0; i<= second; i++){
+                        V[i] = memory[I+i];
+                    }
+                    
                     break;
                 
                 

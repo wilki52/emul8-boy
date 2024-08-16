@@ -16,15 +16,15 @@ class Chip {
 
         unsigned short I; //points to location in memory. index.
         std::vector<short> stack; //two bytes for each stack. stack b empty tho
-        unsigned char delay; //one byte timer
+        unsigned char delay_timer; //one byte timer
         unsigned char sound_timer; //one byte sound timer //gives out beep when not 0.
 
         unsigned char V0, V1, V2, V3, V4, V5, V6, V7, V8, V9, VA, VB, VC, VD, VE, VF; //REGISTERS
-        std::map<char, char> V;
+        std::map<char, uint8_t> V;
         //fontset
         unsigned char chip8_fontset[80] = 
         {
-            0xF0, 0X90, 0X90, 0X90, 0xF0, //0
+            0xF0, 0X90, 0X90, 0X90, 0xF0, //0  //
             0x20, 0x60, 0x20, 0x20, 0x70, // 1
             0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
             0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
@@ -44,7 +44,7 @@ class Chip {
 
         };
 
-        
+        std::map<uint8_t, unsigned char> font_map;
         
         int execute();
 

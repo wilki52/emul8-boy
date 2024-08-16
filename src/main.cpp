@@ -8,7 +8,7 @@ int main(){
     Chip eight;
     //std::cout << "blue";
 
-    //eight.load_rom("roms/IBM Logo.ch8");
+    //eight.load_rom("roms/octojam1title.ch8");
     eight.load_rom("roms/test_opcode.ch8");
     
     eight.interpret_program();
