@@ -4,13 +4,17 @@
 #include <vector>
 #include <map>
 #include "window.h"
+#include <random>
 
 class Chip {
     private:
+    
+// Declare a global distribution object
+   
         Window display;
-        unsigned char pixels[63*32] = {0};
+        uint8_t pixels[63*32] = {0};
         //unsigned short opcode;
-        unsigned char memory[4096];
+        uint8_t memory[4096];
 
         unsigned short PC; //2 bytes = 16 bits, but we only use 12.
 
@@ -20,9 +24,9 @@ class Chip {
         unsigned char sound_timer; //one byte sound timer //gives out beep when not 0.
 
         unsigned char V0, V1, V2, V3, V4, V5, V6, V7, V8, V9, VA, VB, VC, VD, VE, VF; //REGISTERS
-        std::map<char, uint8_t> V;
+        std::map<uint8_t, uint8_t> V;
         //fontset
-        unsigned char chip8_fontset[80] = 
+        uint8_t chip8_fontset[80] = 
         {
             0xF0, 0X90, 0X90, 0X90, 0xF0, //0  //
             0x20, 0x60, 0x20, 0x20, 0x70, // 1

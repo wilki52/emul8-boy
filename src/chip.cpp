@@ -6,6 +6,12 @@
 #include <ios>
 #include <random>
 Chip::Chip(){
+
+    //random here
+    std::random_device dev;
+    std::mt19937 rng;
+    std::uniform_int_distribution<std::mt19937::result_type> dist6(0,255);
+    //rng(dev(), dist6(0, 255));
     //pixels[0]=1;
     //pixels[3]=1;
     //pixels[64]=1;
@@ -18,10 +24,13 @@ Chip::Chip(){
         counter++;
     }
 
+    
+
     //create font map
 
     display.open();
 }
+
 
 void Chip::interpret_program(){
     SDL_Event e;
@@ -38,7 +47,10 @@ void Chip::interpret_program(){
         unsigned short instruction = fetch();
         decode(instruction);
 
+        delay_timer -=1;
+        sound_timer -=1;
         display.updateRender(pixels);
+
 
 
     }
@@ -66,16 +78,24 @@ unsigned short Chip::fetch(){
 int Chip::decode(unsigned short instruction){
     //instruction = 0xA2F0;
     //char first = instruction & 0xff;
-    unsigned short lsb = instruction & 0xF;
-    unsigned short third = (instruction>>4) & 0xF;
-    unsigned short second = (instruction>>8) & 0xF;
-    unsigned short msb = (instruction>>12) & 0xF;
+    uint8_t lsb = instruction & 0xF;
+    uint8_t third = (instruction>>4) & 0xF;
+    uint8_t second = (instruction>>8) & 0xF;
+    uint8_t msb = (instruction>>12) & 0xF;
     //std::cout << std::hex << instruction << std::endl;
     //std::cout << std::hex << msb << std::endl;
     //std::cout << std::hex << second << std::endl;
     //std::cout << std::hex << third << std::endl;
     //std::cout << std::hex << lsb << std::endl;
     unsigned short value = ((third << 4) | lsb);
+
+    if (msb==0xC){
+       // std::random_device dev;
+       // std::mt19937 rng(dev());
+       // std::uniform_int_distribution<std::mt19937::result_type> dist6(0,255);
+    }
+  
+
     switch (msb){
         case 0:
             switch (second){
@@ -247,12 +267,9 @@ int Chip::decode(unsigned short instruction){
             break;
         case 12: //C
             std::cout << "VX = rand() & NN" << std::endl;
-            //std::random_device dev;
-            //std::mt19937 rng(dev());
-            //std::uniform_int_distribution<std::mt19937::result_type> dist6(0,255); // distribution in range [1, 6]
-
+             
             //std::cout << "rand: " << dist6(rng) << std::endl;
-            //V[second] = dist6(rng) & value;
+            V[second] = std::rand() % 256 & value;
             break;
         
         case 13: //D
@@ -264,15 +281,16 @@ int Chip::decode(unsigned short instruction){
             for (int j = 0; j<lsb ; j++){
         
                 unsigned short sprite = memory[I+j];
-                std::cout << I << " + " << j << ": "<<  sprite << std::endl;
+                //std::cout << I << " + " << j << ": "<<  sprite << std::endl;
 
-                
+                /*
                 if ((sprite)>0){
-                    std::cout << "sprite is 1" << std::endl;
+                    //std::cout << "sprite is 1" << std::endl;
                 }
                 else{
-                    std::cout << "sprite is 0" << std::endl;
+                    //std::cout << "sprite is 0" << std::endl;
                 }
+                */
                 for (int i = 0; i<=(7); i++){
                     //std::cout << 'wooo' << std::endl;
 
@@ -336,7 +354,64 @@ int Chip::decode(unsigned short instruction){
                     SDL_Event ev;
                     //while input:
                     if (SDL_PollEvent(&ev)!=0){
-                        V[second] = ev.key.keysym.scancode;
+                        
+                        switch (ev.key.keysym.scancode){
+                            case SDL_SCANCODE_1:
+                                V[second] = 0x1;
+                                break;
+                            case SDL_SCANCODE_2:
+                                V[second] = 0x2;
+                                break;
+                            case SDL_SCANCODE_3:
+                                V[second] = 0x3;
+                                break;
+                            case SDL_SCANCODE_4:
+                                V[second] = 0xC;
+                                break;
+
+                            case SDL_SCANCODE_Q:
+                                V[second] = 0x4;
+                                break;
+                            case SDL_SCANCODE_W:
+                                V[second] = 0x5;
+                                break;
+                            case SDL_SCANCODE_E:
+                                V[second] = 0x6;
+                                break;
+                            case SDL_SCANCODE_R:
+                                V[second] = 0xD;
+                                break;
+
+                            case SDL_SCANCODE_A:
+                                V[second] = 0x7;
+                                break;
+                            case SDL_SCANCODE_S:
+                                V[second] = 0x8;
+                                break;
+                            case SDL_SCANCODE_D:
+                                V[second] = 0x9;
+                                break;
+                            case SDL_SCANCODE_F:
+                                V[second] = 0xE;
+                                break;
+
+                            case SDL_SCANCODE_Z:
+                                V[second] = 0xA;
+                                break;
+                            case SDL_SCANCODE_X:
+                                V[second] = 0x0;
+                                break;
+                            case SDL_SCANCODE_C:
+                                V[second] = 0xB;
+                                break;
+                            case SDL_SCANCODE_V:
+                                V[second] = 0xF;
+                                break;
+                            default:
+                                PC = PC-2;
+                        }
+
+                       // V[second] = ev.key.keysym.scancode;
             
                     }
                     else{
@@ -359,7 +434,7 @@ int Chip::decode(unsigned short instruction){
                 case (0x29): //FX07
                     std::cout << "Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font" << std::endl;
                     //TODO: put font in memory
-
+                    I= ((V[second] & 0x1)% 5)+0x050;
                     break;
                 case (0x33): //FX07
                     std::cout << "Stores the binary-coded decimal representation of VX, with the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2." << std::endl;
