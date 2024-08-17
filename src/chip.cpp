@@ -6,11 +6,11 @@
 #include <ios>
 #include <random>
 Chip::Chip(){
+    // Ignore mouse motion events
+    
 
     //random here
-    std::random_device dev;
-    std::mt19937 rng;
-    std::uniform_int_distribution<std::mt19937::result_type> dist6(0,255);
+
     //rng(dev(), dist6(0, 255));
     //pixels[0]=1;
     //pixels[3]=1;
@@ -26,34 +26,109 @@ Chip::Chip(){
 
     
 
+    
+
     //create font map
 
     display.open();
 }
 
+int Chip::handle_input(SDL_Event event){
+
+    if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP){
+        bool is_pressed = (event.type==SDL_KEYDOWN);
+        switch (event.key.keysym.scancode){
+            case SDL_SCANCODE_1:
+                input[0x1] = is_pressed;
+                break;
+            case SDL_SCANCODE_2:
+                input[0x2] = is_pressed;
+                break;
+            case SDL_SCANCODE_3:
+                input[0x3] = is_pressed;
+                
+                break;
+            case SDL_SCANCODE_4:
+                input[0xC] = is_pressed;
+                break;
+
+            case SDL_SCANCODE_Q:
+                input[0x4] = is_pressed;
+                break;
+            case SDL_SCANCODE_W:
+                input[0x5] = is_pressed;
+                break;
+            case SDL_SCANCODE_E:
+                input[0x6] = is_pressed;
+                break;
+            case SDL_SCANCODE_R:
+                input[0xD] = is_pressed;
+                break;
+
+            case SDL_SCANCODE_A:
+                input[0x7] = is_pressed;
+                break;
+            case SDL_SCANCODE_S:
+                input[0x8] = is_pressed;
+                break;
+            case SDL_SCANCODE_D:
+                input[0x9] = is_pressed;
+                break;
+            case SDL_SCANCODE_F:
+                input[0xE] = is_pressed;
+                break;
+
+            case SDL_SCANCODE_Z:
+                input[0xA] = is_pressed;
+                break;
+            case SDL_SCANCODE_X:
+                input[0x0] = is_pressed;
+                break;
+            case SDL_SCANCODE_C:
+                input[0xB] = is_pressed;
+                break;
+            case SDL_SCANCODE_V:
+                input[0xF] = is_pressed;
+                break;
+
+                }
+
+
+    }
+    
+
+}
 
 void Chip::interpret_program(){
     SDL_Event e;
 
     bool running = true;
     while (running){
-        SDL_PollEvent(&e);
-        //if (SDL_PollEvent(&e)!=0){
-
+        if (SDL_PollEvent(&e)!=0){
+            SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
             if (e.type==SDL_QUIT){
-                running = false;
+                    running = false;
             }
-            //store here?
-        //}
+            handle_input(e);
+        }
         unsigned short instruction = fetch();
         decode(instruction);
 
         delay_timer -=1;
         sound_timer -=1;
-        display.updateRender(pixels);
+
+
+        if (draw){
+            display.updateRender(pixels); 
+            draw = false;  
+            SDL_Delay(10);
+        }
+        
 //   SDL_Delay(50);
 
     }
+
+    display.close();
 }
 
 unsigned short Chip::fetch(){
@@ -88,12 +163,6 @@ int Chip::decode(unsigned short instruction){
     //std::cout << std::hex << third << std::endl;
     //std::cout << std::hex << lsb << std::endl;
     unsigned short value = ((third << 4) | lsb);
-
-    if (msb==0xC){
-       // std::random_device dev;
-       // std::mt19937 rng(dev());
-       // std::uniform_int_distribution<std::mt19937::result_type> dist6(0,255);
-    }
   
 
     switch (msb){
@@ -101,7 +170,6 @@ int Chip::decode(unsigned short instruction){
             switch (second){
                 case 0: //00E0 
                     //update window?
-                    
                     switch (lsb){
 
                         case 0: //00E0
@@ -193,30 +261,37 @@ int Chip::decode(unsigned short instruction){
                     break;
                 case 4:
                     std::cout << "VX += VY (set ZF to 1 if overflow, 0 if not)" << std::endl;
-                    //
-                    
+
                     V[second] = V[second] + V[third]; //would need to do 
 
                     if (V[second] >255 ){ //overflow, check for uint8_t
-                        
                         V[0xf] = 1;
                     }
                     else{
                         V[0xf]=0;
                     }
+                    V[second] = (V[second] & 0xFF);
                     break;
+
                 case 5:
                     std::cout << "VX -= VY (set ZF to 0 if underflow, 1 if not)" << std::endl;
                     
-
-                    V[second] = V[second] - V[third];
-                    
-                    if (V[second] < 0){
-                        V[0xF] = 0;
-                    }
-                    else{
+                    if (V[second] > V[third]){
                         V[0xF] = 1;
                     }
+                    else{
+                        V[0xF] = 0;
+                    }
+
+                    V[second] = V[second] - V[third];
+                    /*
+                    if (V[second] < 0){
+                        V[0xF] = 1;
+                    }
+                    else{
+                        V[0xF] = 0;
+                    }
+                    */
                     break;
                 case 6:
                     std::cout << "VX>>1 shift right by 1, store lsb to VF" << std::endl;
@@ -225,18 +300,20 @@ int Chip::decode(unsigned short instruction){
                     break;
                 case 7:
                     std::cout << "VX = VY-VX if underflow, vf =0. 1 if not." << std::endl;
-                    V[second] = V[third] - V[second];
-                    if (V[second] >=0){
+                    
+                    if (V[third] > V[second]){
                         V[0xF] = 1;
                     }
                     else{
                         V[0xF] = 0;
                     }
+                    V[second] = V[third] - V[second];
                     break;
                 case 14:
                     std::cout << "VX<<=1 SET VF TO ONE IF SOMETHING" << std::endl;
-                    unsigned char v_msb = (V[second] >> 7 & 0x1);
+                    unsigned char v_msb = (((V[second]& 0x80 )>> 7) & 0x1);
                     V[second] = V[second] <<1;
+
                     if (v_msb == 0x1){
                         V[0xF] = 1;
                     }
@@ -275,7 +352,6 @@ int Chip::decode(unsigned short instruction){
         case 13: //D
             std::cout << "display/draw" << std::endl;
 
-
             V[0xF] = 0;
             //std::cout << V[second] << " " << V[third] << std::endl;
             for (int j = 0; j<lsb ; j++){
@@ -296,15 +372,17 @@ int Chip::decode(unsigned short instruction){
 
                     //std::cout << (i+j*64) << std::endl;
                     int bit = ((sprite >> 7-i)& 0x01);
-    
+                    //int bit = (sprite & (0x80>>i));
+                    unsigned short index = (V[second]+i)+(V[third]+j)*64;
                     if ((bit)>0){
                         
-                        if (pixels[(V[second]+i)+ (V[third]+j)*64]==1){
-                            pixels[(V[second]+i)+(V[third]+j)*64]=0;
+                        /**/
+                        if (pixels[index]==1){
+                            pixels[index]=0;
                             V[0xF]=1;
                         }
                         else{
-                            pixels[(V[second]+i)+ (V[third]+j)*64]=1;
+                            pixels[index]=1;
                         }
                         if (((V[second]+i)!=0) && (V[second]+i) %63==0){
                             break;
@@ -313,33 +391,21 @@ int Chip::decode(unsigned short instruction){
                     }
                 }
             }
+            draw= true;
             break;
         case 14: //E
             std::cout << "e stuff" << std::endl;
             switch (lsb){
                 case 1: //EXA1
                     std::cout << "skip if VX is not prressed" << std::endl;
-                    SDL_Event event;
-                    
-                    if (SDL_PollEvent(&event)!=0){
-                        if (event.key.keysym.scancode != V[second]){
-                            PC= PC+2;
-                        }
+                    if (!input[V[second]]){
+                        PC= PC+2;
                     }
-                    else{
-                        PC=PC+2;
-                    }
-                    
-                   PC= PC+2;
                     break;
                 case 14: //EX9E
                     std::cout << "skip next i if key stored in vx is pressed" << std::endl;
-                    SDL_Event eve;
-                    
-                    if (SDL_PollEvent(&eve)!=0){
-                        if (eve.key.keysym.scancode == V[second]){
-                            PC=PC+2;
-                        }
+                    if (input[V[second]]){
+                        PC= PC+2;
                     }
                     
                     break;
@@ -354,77 +420,65 @@ int Chip::decode(unsigned short instruction){
                     V[second] = delay_timer;
                     break;
                 case (0x0A): //FX0A
+                    break;
                     std::cout << "A key press is awaited, and then stored in VX (blocking operation, all instruction halted until next key event," << std::endl;
             
-                    SDL_Event ev;
-                    //while input:
-
-                    while (SDL_PollEvent(&ev)){
-                        if (ev.type == SDL_KEYDOWN){
-
-                        
-                        switch (ev.key.keysym.scancode){
-                            case SDL_SCANCODE_1:
-                                V[second] = 0x1;
-                                break;
-                            case SDL_SCANCODE_2:
-                                V[second] = 0x2;
-                                break;
-                            case SDL_SCANCODE_3:
-                                V[second] = 0x3;
-                                break;
-                            case SDL_SCANCODE_4:
-                                V[second] = 0xC;
-                                break;
-
-                            case SDL_SCANCODE_Q:
-                                V[second] = 0x4;
-                                break;
-                            case SDL_SCANCODE_W:
-                                V[second] = 0x5;
-                                break;
-                            case SDL_SCANCODE_E:
-                                V[second] = 0x6;
-                                break;
-                            case SDL_SCANCODE_R:
-                                V[second] = 0xD;
-                                break;
-
-                            case SDL_SCANCODE_A:
-                                V[second] = 0x7;
-                                break;
-                            case SDL_SCANCODE_S:
-                                V[second] = 0x8;
-                                break;
-                            case SDL_SCANCODE_D:
-                                V[second] = 0x9;
-                                break;
-                            case SDL_SCANCODE_F:
-                                V[second] = 0xE;
-                                break;
-
-                            case SDL_SCANCODE_Z:
-                                V[second] = 0xA;
-                                break;
-                            case SDL_SCANCODE_X:
-                                V[second] = 0x0;
-                                break;
-                            case SDL_SCANCODE_C:
-                                V[second] = 0xB;
-                                break;
-                            case SDL_SCANCODE_V:
-                                V[second] = 0xF;
-                                break;
-                            default:
-                                PC = PC-2;
-                        }
-                        }
-                       // V[second] = ev.key.keysym.scancode;
-            
+                    if (input[0]){
+                        V[second] = 0;
                     }
-                    //else{
-                    //    PC= PC-2;
-                    //} 
+                    else if (input[1]){
+                        V[second] = 1;
+                    }
+                    else if (input[2]){
+                        V[second] = 2;
+
+                    }
+                    else if (input[3]){
+                        V[second] = 3;
+
+                    }
+                    else if (input[4]){
+                        V[second] = 4;
+
+                    }
+                    else if (input[5]){
+                        V[second] = 5;
+
+                    }
+                    else if (input[6]){
+                        V[second] = 6;
+
+                    }
+                    else if (input[7]){
+                        V[second] = 7;
+                    }
+                    else if (input[8]){
+                        V[second] = 8;
+                    }
+                    else if (input[9]){
+                        V[second] = 9;
+                    }
+                    else if (input[10]){
+                        V[second] = 10;
+                    }
+                    else if (input[11]){
+                        V[second] = 11;
+                    }
+                    else if (input[12]){
+                        V[second] = 12;
+                    }
+                    else if (input[13]){
+                        V[second] = 13;
+                    }
+                    else if (input[14]){
+                        V[second] = 14;
+                    }
+                    else if (input[15]){
+                        V[second] = 15;
+                    }
+            
+                        
+
                     //else: return 0, aka PC=PC-2;
                     break;
                 case (0x15): //FX07
@@ -441,9 +495,9 @@ int Chip::decode(unsigned short instruction){
                     break;
                 case (0x29): //FX07
                     std::cout << "Sets I to the location of the sprite for the character in VX. Characters 0-F (in hexadecimal) are represented by a 4x5 font" << std::endl;
-                    //TODO: put font in memory
+
                     I= ((V[second])* 5)+0x050;
-                    //I= 0x055;
+         
                     break;
                 case (0x33): //FX07
                     std::cout << "Stores the binary-coded decimal representation of VX, with the hundreds digit in memory at location in I, the tens digit at location I+1, and the ones digit at location I+2." << std::endl;

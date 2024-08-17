@@ -10,11 +10,13 @@ class Chip {
     private:
     
 // Declare a global distribution object
-   
+        bool draw;
         Window display;
         uint8_t pixels[63*32] = {0};
         //unsigned short opcode;
         uint8_t memory[4096];
+
+        std::map<uint8_t, uint8_t> input;
 
         unsigned short PC; //2 bytes = 16 bits, but we only use 12.
 
@@ -53,6 +55,7 @@ class Chip {
         int execute();
 
     public:
+        int handle_input(SDL_Event event);
         int decode(unsigned short instruction);
         unsigned short fetch();
         void interpret_program(); //emulate a cycle 
