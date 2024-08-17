@@ -23,18 +23,10 @@ Chip::Chip(){
         memory[i] = chip8_fontset[counter];
         counter++;
     }
-
-    
-
-    
-
-    //create font map
-
     display.open();
 }
 
 int Chip::handle_input(SDL_Event event){
-
     if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP){
         bool is_pressed = (event.type==SDL_KEYDOWN);
         switch (event.key.keysym.scancode){
@@ -107,50 +99,39 @@ void Chip::interpret_program(){
         if (SDL_PollEvent(&e)!=0){
             SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
             if (e.type==SDL_QUIT){
-                    running = false;
+                running = false;
             }
             handle_input(e);
         }
-        unsigned short instruction = fetch();
+        uint16_t instruction = fetch();
         decode(instruction);
 
         delay_timer -=1;
         sound_timer -=1;
-
 
         if (draw){
             display.updateRender(pixels); 
             draw = false;  
             SDL_Delay(10);
         }
-        
-//   SDL_Delay(50);
-
     }
-
     display.close();
 }
 
-unsigned short Chip::fetch(){
+uint16_t Chip::fetch(){
     //fetch instruction from memory, using the PC a;s the index.
     //ex: memory[PC] = 0xA2
     //memory[PC+1] = 0xF0
-    unsigned char instruction_a = memory[PC];
-    unsigned char instruction_b = memory[PC+1];
+    uint8_t instruction_a = memory[PC];
+    uint8_t instruction_b = memory[PC+1];
     
-    
-    //instruction_a = 0xA2;
-    //instruction_b = 0xF0;
-    
-    unsigned short instruction = (instruction_a << 8 | instruction_b);
+    uint16_t instruction = (instruction_a << 8 | instruction_b);
     std::cout << PC << ": " << std::hex << instruction << std::endl;
     PC= PC+2;
     return instruction;
-
-    
 }
 
-int Chip::decode(unsigned short instruction){
+int Chip::decode(uint16_t instruction){
     //instruction = 0xA2F0;
     //char first = instruction & 0xff;
     uint8_t lsb = instruction & 0xF;
@@ -162,16 +143,13 @@ int Chip::decode(unsigned short instruction){
     //std::cout << std::hex << second << std::endl;
     //std::cout << std::hex << third << std::endl;
     //std::cout << std::hex << lsb << std::endl;
-    unsigned short value = ((third << 4) | lsb);
+    uint8_t value = ((third << 4) | lsb);
   
-
     switch (msb){
         case 0:
             switch (second){
-                case 0: //00E0 
-                    //update window?
+                case 0:
                     switch (lsb){
-
                         case 0: //00E0
                             std::cout << "clear screen" << std::endl;
                             std::fill(std::begin(pixels), std::end(pixels), 0);
@@ -182,17 +160,11 @@ int Chip::decode(unsigned short instruction){
                             stack.pop_back();
                         
                     }
-
-                    
-                    
-
                 break;
             }
-
             break;
 
         case 1:
-       
             std::cout << "jump" << std::endl;
             //return 
             PC = ((second << 8) | (third <<4) | lsb);
@@ -232,7 +204,6 @@ int Chip::decode(unsigned short instruction){
             V[second] = value;
             break;
 
-
         case 7: //7XNN
             std::cout << "add NN to register VX" << std::endl;
             //unsigned char val = ((third <<4)|lsb);
@@ -261,9 +232,7 @@ int Chip::decode(unsigned short instruction){
                     break;
                 case 4:
                     std::cout << "VX += VY (set ZF to 1 if overflow, 0 if not)" << std::endl;
-
                     V[second] = V[second] + V[third]; //would need to do 
-
                     if (V[second] >255 ){ //overflow, check for uint8_t
                         V[0xf] = 1;
                     }
@@ -275,29 +244,21 @@ int Chip::decode(unsigned short instruction){
 
                 case 5:
                     std::cout << "VX -= VY (set ZF to 0 if underflow, 1 if not)" << std::endl;
-                    
                     if (V[second] > V[third]){
                         V[0xF] = 1;
                     }
                     else{
                         V[0xF] = 0;
                     }
-
                     V[second] = V[second] - V[third];
-                    /*
-                    if (V[second] < 0){
-                        V[0xF] = 1;
-                    }
-                    else{
-                        V[0xF] = 0;
-                    }
-                    */
                     break;
+
                 case 6:
                     std::cout << "VX>>1 shift right by 1, store lsb to VF" << std::endl;
                     V[0xF] = (V[second] & 0x1);
                     V[second] = V[second] >>1;
                     break;
+
                 case 7:
                     std::cout << "VX = VY-VX if underflow, vf =0. 1 if not." << std::endl;
                     
@@ -309,11 +270,11 @@ int Chip::decode(unsigned short instruction){
                     }
                     V[second] = V[third] - V[second];
                     break;
+
                 case 14:
                     std::cout << "VX<<=1 SET VF TO ONE IF SOMETHING" << std::endl;
-                    unsigned char v_msb = (((V[second]& 0x80 )>> 7) & 0x1);
+                    uint8_t v_msb = (((V[second]& 0x80 )>> 7) & 0x1);
                     V[second] = V[second] <<1;
-
                     if (v_msb == 0x1){
                         V[0xF] = 1;
                     }
@@ -321,7 +282,6 @@ int Chip::decode(unsigned short instruction){
                         V[0xF] = 0;
                     }
                     break;
-                
             }
             break;
 
@@ -330,21 +290,21 @@ int Chip::decode(unsigned short instruction){
             if (V[second] != V[third]){
                 PC = PC +2;
             }
-            
             break;
+
         case 10: //A
             std::cout << "set index register I" << std::endl;
             I  = (second << 8) | (third <<4) | lsb;
             //std::cout << I << "set" << std::endl;
-    
             break;
+
         case 11: //B
             std::cout << "jump to address NNN plus V0" << std::endl;
             PC= V[0x0]+((second << 8) | (third <<4) | lsb); //v0 + NNN
             break;
+
         case 12: //C
             std::cout << "VX = rand() & NN" << std::endl;
-             
             //std::cout << "rand: " << dist6(rng) << std::endl;
             V[second] = std::rand() % 256 & value;
             break;
@@ -356,21 +316,11 @@ int Chip::decode(unsigned short instruction){
             //std::cout << V[second] << " " << V[third] << std::endl;
             for (int j = 0; j<lsb ; j++){
         
-                unsigned short sprite = memory[I+j];
-                //std::cout << I << " + " << j << ": "<<  sprite << std::endl;
-
-                /*
-                if ((sprite)>0){
-                    //std::cout << "sprite is 1" << std::endl;
-                }
-                else{
-                    //std::cout << "sprite is 0" << std::endl;
-                }
-                */
+                uint8_t sprite = memory[I+j];
                 for (int i = 0; i<=(7); i++){
-                    int bit = ((sprite >> 7-i)& 0x01);
+                    uint8_t bit = ((sprite >> 7-i)& 0x01);
                     //int bit = (sprite & (0x80>>i));
-                    unsigned short index = (V[second]+i)+(V[third]+j)*64;
+                    uint16_t index = (V[second]+i)+(V[third]+j)*64;
                     if ((bit)>0){
                         if (pixels[index]==1){
                             pixels[index]=0;
@@ -379,16 +329,15 @@ int Chip::decode(unsigned short instruction){
                         else{
                             pixels[index]=1;
                         }
-
                         if (((V[second]+i)!=0) && (V[second]+i) %63==0){
                             break;
                         }
-                        //std::cout << 'helo' << std::endl;
                     }
                 }
             }
             draw= true;
             break;
+
         case 14: //E
             std::cout << "e stuff" << std::endl;
             switch (lsb){
@@ -403,11 +352,10 @@ int Chip::decode(unsigned short instruction){
                     if (input[V[second]]){
                         PC= PC+2;
                     }
-                    
-                    break;
-                    
+                    break;    
             }
             break;
+
         case 15: //F
             std::cout << "f" << std::endl;
             switch ((third<<4)| lsb){
@@ -472,7 +420,9 @@ int Chip::decode(unsigned short instruction){
                     else if (input[15]){
                         V[second] = 15;
                     }
-            
+                    else{
+                        PC=PC-2;
+                    }
                         
 
                     //else: return 0, aka PC=PC-2;
@@ -547,10 +497,9 @@ bool Chip::load_rom(const char path[]){
     reader.seekg(0, reader.beg);
 
     std::cout << "working.." << length << std::endl;
-    unsigned char instruction;
+    uint8_t instruction;
     I=0x200;
     PC =0x200;
-    unsigned char* pointer = memory;
     while (!reader.eof()){
        // memory
 

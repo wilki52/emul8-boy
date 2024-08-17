@@ -25,8 +25,8 @@ class Chip {
         unsigned char delay_timer; //one byte timer
         unsigned char sound_timer; //one byte sound timer //gives out beep when not 0.
 
-        unsigned char V0, V1, V2, V3, V4, V5, V6, V7, V8, V9, VA, VB, VC, VD, VE, VF; //REGISTERS
-        std::map<uint8_t, uint8_t> V;
+        
+        std::map<uint8_t, uint8_t> V; //registers
         //fontset
         uint8_t chip8_fontset[80] = 
         {
@@ -56,8 +56,8 @@ class Chip {
 
     public:
         int handle_input(SDL_Event event);
-        int decode(unsigned short instruction);
-        unsigned short fetch();
+        int decode(uint16_t instruction);
+        uint16_t fetch();
         void interpret_program(); //emulate a cycle 
         Chip();
         bool load_rom(const char path[]);
