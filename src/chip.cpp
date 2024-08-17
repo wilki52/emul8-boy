@@ -368,15 +368,10 @@ int Chip::decode(unsigned short instruction){
                 }
                 */
                 for (int i = 0; i<=(7); i++){
-                    //std::cout << 'wooo' << std::endl;
-
-                    //std::cout << (i+j*64) << std::endl;
                     int bit = ((sprite >> 7-i)& 0x01);
                     //int bit = (sprite & (0x80>>i));
                     unsigned short index = (V[second]+i)+(V[third]+j)*64;
                     if ((bit)>0){
-                        
-                        /**/
                         if (pixels[index]==1){
                             pixels[index]=0;
                             V[0xF]=1;
@@ -384,6 +379,7 @@ int Chip::decode(unsigned short instruction){
                         else{
                             pixels[index]=1;
                         }
+
                         if (((V[second]+i)!=0) && (V[second]+i) %63==0){
                             break;
                         }
