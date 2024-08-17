@@ -6,32 +6,6 @@ Window::Window(){
     
 }
 
-bool Window::init(){
-    bool success = true;
-
-    //initialize
-    if (SDL_Init(SDL_INIT_VIDEO) < 0){
-        std::cout << "SDL could not initialize! SDL_Error:  "<< SDL_GetError() << std::endl;
-        success = false;
-    }
-    else{
-        //create window
-        global_window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 64, 32, SDL_WINDOW_SHOWN);
-        if (global_window == NULL)
-        {
-            std::cout << "SDL could not initialize! SDL_Error: " << std::endl;
-            success = false;
-        }
-        else{
-            //get window surface of window.
-            global_s_surface = SDL_GetWindowSurface(global_window);
-        }
-    }
-    
-    return success;
-}
-
-
 
 void Window::close(){
 
@@ -78,9 +52,4 @@ bool Window::updateRender(unsigned char pixels[]){
         }
     }
     SDL_RenderPresent(global_renderer);
-}
-
-bool Window::input_event(){
-
-
 }

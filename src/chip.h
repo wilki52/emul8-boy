@@ -18,12 +18,12 @@ class Chip {
 
         std::map<uint8_t, uint8_t> input;
 
-        unsigned short PC; //2 bytes = 16 bits, but we only use 12.
+        uint16_t PC; //2 bytes = 16 bits, but we only use 12.
 
-        unsigned short I; //points to location in memory. index.
-        std::vector<short> stack; //two bytes for each stack. stack b empty tho
-        unsigned char delay_timer; //one byte timer
-        unsigned char sound_timer; //one byte sound timer //gives out beep when not 0.
+        uint16_t I; //points to location in memory. index.
+        std::vector<uint16_t> stack; //two bytes for each stack. stack b empty tho
+        uint8_t delay_timer; //one byte timer
+        uint8_t sound_timer; //one byte sound timer //gives out beep when not 0.
 
         
         std::map<uint8_t, uint8_t> V; //registers
